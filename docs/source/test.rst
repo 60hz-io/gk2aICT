@@ -7,5 +7,4 @@ TEST FILE HAHA
       3rd
 
 ..code::
-   # codeblock
    print('hello rst')
