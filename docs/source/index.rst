@@ -11,7 +11,7 @@ Welcome to gk2aICT's documentation!
    :caption: Contents:
    
    test.rst
-
+   test.py
 
 Indices and tables
 ==================
