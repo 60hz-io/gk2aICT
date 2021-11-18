@@ -6,5 +6,5 @@ TEST FILE HAHA
    2nd
       3rd
 
-..code::
+.. code::
    print('hello rst')
