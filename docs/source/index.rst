@@ -6,9 +6,14 @@
 Welcome to gk2aICT's documentation!
 ===================================
 
+DHKIM Example
+^^^^^^^^^^^^^
+
+This is too uncomfortable nowtimes... but I hope gonna be familiar with this doc tool
+
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
+   :caption: Documents:
    
    test.rst
    test.py
