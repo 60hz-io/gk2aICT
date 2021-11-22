@@ -10,7 +10,7 @@ Welcome to gk2aICT's documentation!
    :maxdepth: 2
    :caption: Contents:
 
-
+   api_server
 
 Indices and tables
 ==================

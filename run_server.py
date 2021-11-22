@@ -50,11 +50,12 @@ def get_data():
         'data',
         data_name
     )
+    print(file_path)
     file_name = f'gk2a_{data_name}_{target_datetime}.json'
 
     target = load_data(os.path.join(file_path, file_name))
 
-    return jsonify(result)
+    return jsonify(target)
 
 
 def load_data(file_path):
@@ -85,4 +86,4 @@ def load_data(file_path):
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=5000)
