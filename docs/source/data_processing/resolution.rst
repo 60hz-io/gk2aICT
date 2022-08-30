@@ -1,6 +1,6 @@
-=========================
-GK2A Data Processing Docs
-=========================
+=============================
+Modifying Resolution of GK2A
+=============================
 
 The projects contains GK2A data processing such as clipping, modifying resolution, and etc.
 
