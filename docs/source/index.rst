@@ -11,6 +11,10 @@ Welcome to gk2aICT's documentation!
    :caption: Contents:
 
    api_server
+   data_processing/basic
+   data_processing/resolution
+   data_processing/cloud_albedo
+   data_processing/cloud_motion
 
 Indices and tables
 ==================

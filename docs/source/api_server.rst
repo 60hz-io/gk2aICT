@@ -1,65 +1,77 @@
-==================
-Data API
-==================
+=======================
+GK2A Satellite Data API
+=======================
 
-위성자료 및 위성자료로 생산한 데이터를 조회하는 서비스
-
-
-1. 상세기능
-^^^^^^^^^^^^
-
-   조회조건(시점)으로 위성자료(청천복사량, 구름 분석 등)와 위성자료로 생산한 데이터(구름움직임 등)를 조회하는 기능
-
-      - **요청주소**: ```http://api.60hz.io/data/```
-      - **반환타입**: ```json```
+This API Service is to provide GK2A satellite data and secondary processed data which is expected to be used in various areas
 
 
-2. 요청변수 (Request Parameters)
+1. Introduction
+^^^^^^^^^^^^^^^^
+
+   Request GK2A satellite data and secondary processed data (cloud albedo, cloud motion, and etc.)
+   Provide clip interesting regions via latitude and longitude, and resolution manipulation)
+
+      - **url**: ```http://apialpha.60hz.io/gk2a/```
+      - **output type**: ```json```
+
+
+2. Request Parameters
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
      
-   ===============  ==================  ============  =========================
-    항목명(국문)      항목명(영문)         항목구분       항목설명
-   ===============  ==================  ============  =========================
-    데이터명          target_data         필수          조회할 데이터 이름
-    조회시점          target_datetime     필수          조회 시점(YYYYMMDDhhmm)
-   ===============  ==================  ============  =========================
+   ===============  ============  ==========================================================================
+    Arguments        Required      Description
+   ===============  ============  ==========================================================================
+    variable         True          Name of data interested in
+    obs_datetime     True          Datetime of data interested in (YYYYMMDDhhmm)
+    ullatitude       False         Latitude at upper-left corner 
+    ullongitude      False         Longitude at upper-left corner
+    lrlatitude       False         Latitude at lower-right corner
+    lrlongitude      False         Longitude at lower-right corner
+    resolution       False         Resolution reduction/magnification ratio compared to original data
+   ===============  ============  ==========================================================================
 
 
-3. 출력 결과 (Response)
+3. Response
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-   ===============  ==================  ============================================================================
-    항목명(국문)      항목명(영문)         항목설명
-   ===============  ==================  ============================================================================
-    데이터            data               8비트 이진 데이터로 암호화된 이미지 데이터, Base64 등을 이용한 decode 과정 필요
-                                         (원본 이미지 크기=1000x800)
-   ===============  ==================  ============================================================================
+   ==================  =====================================================================================
+    Keys                Description
+   ==================  =====================================================================================
+    dtype               Type of data
+    shape               Original shape of data, decoded result of 'data' should be reshpaed by this
+    data                8-bit encoded numpy array data, should be decoded using 'base64' or other libraries
+   ==================  =====================================================================================
 
 
 
 ^^^^^^^^^^^^^^^^
 
 
-샘플코드 (python3)
-===================
+Sample code (python3)
+======================
 
 .. code::
 
    import requests
-
-   url = 'http://api.60hz.io/data'
-   params = {'target_data':'cloudmotion', 'target_datetime':'202111181800'}
-
-   response = requests.get(base_url, params=params)
-   data = response.json()['data'].encode('utf-8')
-   print(data)
-
-
-   # 반환된 결과를 원본 이미지 데이터 형태로 decode 위해 'base64'와 'numpy'를 사용
    import base64
    import numpy as np
 
-   np.frombuffer(
-      base64.decodebytes(data), dtype='float32'
-   ).reshape(1000, 800, 2)
+   url = 'http://apialpha.60hz.io/data'
+   params = {'variables':'cloudalbedo', 'obs_datetime':'202111180550'}
 
+   response = requests.get(base_url, params=params)
+   data = response.json()
+   result = np.frombuffer(
+      base64.decodebytes(data['data'].encode('utf8')),
+      dtype=data['dtype']
+   ).reshape(data['shape'])
+
+   print(result)
+
+
+
+
+.. 99. References
+.. ^^^^^^^^^^^^^^^^^^^^^^^
+
+.. https://nmsc.kma.go.kr/enhome/html/main/main.do
