@@ -5,11 +5,11 @@
 ## install
 ```bash
 # create conda env
-$ conda create -n gk2a python==3.6.10 -y
+$ conda create -n gk2a python==3.8.8 -y
 
 # install dependencies
 $ conda activate gk2a
-$ conda install -c conda-forge opencv
+$ conda install -c conda-forge opencv==4.5.5
 
 # python dependencies
 $ pip install -r requirements.txt
