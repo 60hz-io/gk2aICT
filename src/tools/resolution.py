@@ -32,7 +32,9 @@ def downsize_img(img_arr, scale=None, size=None):
         
         return out_arr
     
-    raise ValueError('Invalid input arguments, please input oneof scale factor or size of desired output')  
+    raise ValueError("""
+        Invalid input arguments, please input scale factor or size of desired output
+    """)  
     
     
     
@@ -65,4 +67,6 @@ def upsize_img(img_arr, scale=None, size=None):
         
         return out_arr
     
-    raise ValueError('Invalid input arguments, please input oneof scale factor or size of desired output')  
+    raise ValueError("""
+        Invalid input arguments, please input scale factor or size of desired output
+    """)  

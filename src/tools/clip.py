@@ -3,7 +3,7 @@ import numpy as np
 
 class GK2ABaseProcessor(object):
     def main():
-        return 0
+        return None
 
 class GK2AFDProcessor(object):
     
