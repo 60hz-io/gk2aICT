@@ -2,7 +2,12 @@ LOCAL_GK2A_DIR = '/mnt/sda1/research/data/tmp_gk2a/'
 
 SUPERRES_MODEL_PATH = '/mnt/sda1/research/data/superres_model'
 
+LATLON_DIR = '/mnt/sdb1/wscho/data_for_research/ICTgk2a/latlon'
+
 S3_GK2A_DIR = 's3://60hz.data/kmipa/gk2a'
+
+ASOS_DIR = '/mnt/sda1/research/data/asos/mos_automation'
+
 
 VAR2FILE = { # area = fd, ea, or ko (fulldisk, eastasia, or korea)
     'red': 'gk2a_ami_le1b_vi006_{area}005ge_{yyyymmddHHMM}.nc', # vi006
