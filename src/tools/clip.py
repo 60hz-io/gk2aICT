@@ -6,13 +6,12 @@ from datetime import datetime, timedelta
 from netCDF4 import Dataset
 from PIL import Image
 
-global _LATLON_DIR
-global _BOUNDARY 
-
-_LATLON_DIR = '/mnt/sdb1/wscho/data_for_research/ICTgk2a/latlon/'
-_BOUNDARY = 250
 
 class GK2ABaseProcessor(object):
+
+    def __init__(self,boundary):
+        self._LATLON_DIR = '/mnt/sda1/research/data/latlons'
+        self._BOUNDARY = boundary
 
     @staticmethod
     def resolution_from_filename(gk2a_filename):
@@ -27,7 +26,7 @@ class GK2ABaseProcessor(object):
         ullongitude, 
         lrlatitude, 
         lrlongitude,
-        boundary = True,
+        boundary = False,
     ):
         arr = np.array(array)
 
@@ -40,10 +39,10 @@ class GK2ABaseProcessor(object):
         lrcol = int(np.ceil(lrcol)) 
 
         if boundary:
-            ulrow  -=  _BOUNDARY
-            ulcol  -=  _BOUNDARY 
-            lrrow  +=  _BOUNDARY 
-            lrcol  +=  _BOUNDARY 
+            ulrow  -=  self._BOUNDARY
+            ulcol  -=  self._BOUNDARY
+            lrrow  +=  self._BOUNDARY
+            lrcol  +=  self._BOUNDARY
         
         clip = np.zeros((self.index_max, self.index_max))
         
@@ -56,16 +55,14 @@ class GK2ABaseProcessor(object):
             and (lrrow < self.index_max) 
            ): 
             clip = arr[ulrow:lrrow, ulcol:lrcol]
-            ulrow  +=  _BOUNDARY
-            ulcol  +=  _BOUNDARY 
-            lrrow  -=  _BOUNDARY 
-            lrcol  -=  _BOUNDARY 
+
             self.lat_clip = self.lat[ulrow:lrrow, ulcol:lrcol]
             self.lon_clip = self.lon[ulrow:lrrow, ulcol:lrcol]
         else:
             raise ValueError(
                 "Invalid arguments, check [(ulcol <= lrcol), (ulrow <= lrrow), " +\
-                "(0 <= ulcol), (lrcol < index_max), (0 <= ulrow), (lrrow < index_max)]"
+                "(0 <= ulcol), (lrcol < index_max), (0 <= ulrow), (lrrow < index_max)]" +\
+                "Recognize the default size of boundary is 250, also you can assign a value on boudnary when you call Processor class"
             )
         return clip
 
@@ -84,7 +81,7 @@ class GK2ABaseProcessor(object):
         ncol = target_rc[1]
         
         return (nrow, ncol)
-
+    
     def get_gk2a_var(self,file_key,var_name,base_dir,str_time):
 
         time_org = datetime.strptime(str_time, "%Y-%m-%d %H:%M")
@@ -116,8 +113,9 @@ class GK2AFDProcessor(GK2ABaseProcessor):
     
     DEG2RAD = 3.14159265358979 / 180.0 
     
-    def __init__(self, resolution=None, gk2a_filename=None, size=None):
-
+    def __init__(self, resolution=None, gk2a_filename=None, size=None, boundary=250):
+        super().__init__(boundary) 
+        
         if resolution:
             self.resolution = resolution    
         elif gk2a_filename:
@@ -153,7 +151,7 @@ class GK2AFDProcessor(GK2ABaseProcessor):
         self.sub_lon = 128.2 
         self.sub_lon = self.sub_lon * self.DEG2RAD
 
-        latlons = Dataset(glob.glob(os.path.join(_LATLON_DIR, '*fd*.nc'))[0])
+        latlons = Dataset(glob.glob(os.path.join(self._LATLON_DIR, '*fd*.nc'))[0])
         self.lat = latlons['lat'][:]
         self.lon = latlons['lon'][:]
     
@@ -169,47 +167,48 @@ class GK2AFDProcessor(GK2ABaseProcessor):
             return np.float(2.0)
         
             
-        def latlon_from_rowcol_fd_old(self, idx_row, idx_col):
-            """ returns latitude and longitude from index of row and column of an array """
-            x = self.DEG2RAD * ( (idx_col - self.COFF)*2**16 / self.CFAC )
-            y = self.DEG2RAD * ( (idx_row - self.LOFF)*2**16 / self.LFAC )
-            Sd = np.sqrt( (42164.0*np.cos(x)*np.cos(y))**2 - (np.cos(y)**2 + 1.006739501*np.sin(y)**2)*1737122264)
-            Sn = (42164.0*np.cos(x)*np.cos(y)-Sd) / (np.cos(y)**2 + 1.006739501*np.sin(y)**2)
-            S1 = 42164.0 - ( Sn * np.cos(x) * np.cos(y) )
-            S2 = Sn * ( np.sin(x) * np.cos(y) )
-            S3 = -Sn * np.sin(y)
-            Sxy = np.sqrt( ((S1*S1)+(S2*S2)) )
+    def latlon_from_rowcol_geos(self, idx_row, idx_col):
+        """ returns latitude and longitude from index of row and column of an array """
+        x = self.DEG2RAD * ( (idx_col - self.COFF)*2**16 / self.CFAC )
+        y = self.DEG2RAD * ( (idx_row - self.LOFF)*2**16 / self.LFAC )
+        Sd = np.sqrt( (42164.0*np.cos(x)*np.cos(y))**2 - (np.cos(y)**2 + 1.006739501*np.sin(y)**2)*1737122264)
+        Sn = (42164.0*np.cos(x)*np.cos(y)-Sd) / (np.cos(y)**2 + 1.006739501*np.sin(y)**2)
+        S1 = 42164.0 - ( Sn * np.cos(x) * np.cos(y) )
+        S2 = Sn * ( np.sin(x) * np.cos(y) )
+        S3 = -Sn * np.sin(y)
+        Sxy = np.sqrt( ((S1*S1)+(S2*S2)) )
 
-            nlon = (np.arctan(S2/S1)+self.sub_lon)/self.DEG2RAD 
-            nlat = np.arctan( ( 1.006739501 *S3)/Sxy)/self.DEG2RAD
-            
-            return (nlat, nlon)
-        
-        def rowcol_from_latlon_fd_old(self, latitude, longitude): 
-        #""" returns index of row and column from given latitude and longitude """
-            latitude = latitude * self.DEG2RAD 
-            longitude = longitude * self.DEG2RAD
-            c_lat = np.arctan(0.993305616*np.tan(latitude))
-            RL = 6356.7523 / np.sqrt( 1.0 - 0.00669438444 * np.cos(c_lat)**2.0 ) 
-            R1 = 42164.0 - RL * np.cos(c_lat) * np.cos(longitude - self.sub_lon)
-            R2 = -RL * np.cos(c_lat) *np.sin(longitude - self.sub_lon)
-            R3 = RL* np.sin(c_lat)
-            Rn = np.sqrt(R1**2.0 + R2**2.0 + R3**2.0 )
-            x = np.arctan(-R2 / R1) / self.DEG2RAD 
-            y = np.arcsin(-R3 / Rn) / self.DEG2RAD 
+        nlon = (np.arctan(S2/S1)+self.sub_lon)/self.DEG2RAD 
+        nlat = np.arctan( ( 1.006739501 *S3)/Sxy)/self.DEG2RAD
 
-            ncol = self.COFF + (x * 2.0**(-16) * self.CFAC) 
-            nrow = self.LOFF + (y * 2.0**(-16) * self.LFAC)
+        return (nlat, nlon)
 
-            return (nrow, ncol)
+    def rowcol_from_latlon_geos(self, latitude, longitude): 
+    #""" returns index of row and column from given latitude and longitude """
+        latitude = latitude * self.DEG2RAD 
+        longitude = longitude * self.DEG2RAD
+        c_lat = np.arctan(0.993305616*np.tan(latitude))
+        RL = 6356.7523 / np.sqrt( 1.0 - 0.00669438444 * np.cos(c_lat)**2.0 ) 
+        R1 = 42164.0 - RL * np.cos(c_lat) * np.cos(longitude - self.sub_lon)
+        R2 = -RL * np.cos(c_lat) *np.sin(longitude - self.sub_lon)
+        R3 = RL* np.sin(c_lat)
+        Rn = np.sqrt(R1**2.0 + R2**2.0 + R3**2.0 )
+        x = np.arctan(-R2 / R1) / self.DEG2RAD 
+        y = np.arcsin(-R3 / Rn) / self.DEG2RAD 
+
+        ncol = self.COFF + (x * 2.0**(-16) * self.CFAC) 
+        nrow = self.LOFF + (y * 2.0**(-16) * self.LFAC)
+
+        return (nrow, ncol)
 
 
 class GK2AEAProcessor(GK2ABaseProcessor):
 
     DEG2RAD = 3.14159265358979 / 180.0
 
-    def __init__(self, resolution=None, gk2a_filename=None, size=None):
-        
+    def __init__(self, resolution=None, gk2a_filename=None, size=None, boundary=250):
+        super().__init__(boundary) 
+
         if resolution:
             self.resolution = resolution    
         elif gk2a_filename:
@@ -232,7 +231,7 @@ class GK2AEAProcessor(GK2ABaseProcessor):
                 "Invalid resolution, which should be one of [0.5, 1.0, 2.0]"
             )
             
-        latlons = Dataset(glob.glob(os.path.join(_LATLON_DIR, '*ea*.nc'))[0])
+        latlons = Dataset(glob.glob(os.path.join(self._LATLON_DIR, '*ea*.nc'))[0])
         self.lat = latlons['lat'][:]
         self.lon = latlons['lon'][:]
 
@@ -250,11 +249,11 @@ class GK2AEAProcessor(GK2ABaseProcessor):
 
 class GK2AKOProcessor(GK2ABaseProcessor):
     
-    _LATLON_DIR = '/mnt/sdb1/wscho/data_for_research/ICTgk2a/latlon/'
     DEG2RAD = 3.14159265358979 / 180.0 
     
-    def __init__(self, resolution=None, gk2a_filename=None, size=None):
-        
+    def __init__(self, resolution=None, gk2a_filename=None, size=None,boundary=250):
+        super().__init__(boundary) 
+
         if resolution:
             self.resolution = resolution    
         elif gk2a_filename:
@@ -277,7 +276,7 @@ class GK2AKOProcessor(GK2ABaseProcessor):
                 "Invalid resolution, which should be one of [0.5, 1.0, 2.0]"
             )
             
-        latlons = Dataset(glob.glob(os.path.join(_LATLON_DIR, '*ko*.nc'))[0])
+        latlons = Dataset(glob.glob(os.path.join(self._LATLON_DIR, '*ko*.nc'))[0])
         self.lat = latlons['lat'][:]
         self.lon = latlons['lon'][:]
     
